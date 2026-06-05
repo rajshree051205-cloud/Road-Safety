@@ -1,0 +1,568 @@
+html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NightWatch — AI Safety App</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- SPLASH SCREEN -->
+<div class="splash" id="splashScreen">
+  <div class="splash-logo">🌙</div>
+  <h1>NightWatch</h1>
+  <p class="splash-sub">AI-powered personal safety for night travel. Real-time route scoring, crowd intelligence &amp; emergency response.</p>
+  <div class="location-card">
+    <div class="location-icon"><i class="ti ti-map-pin"></i></div>
+    <div style="font-size:16px;font-weight:700">Enable Location Access</div>
+    <p>NightWatch needs your location to calculate live AI safety scores and protect you in real time.</p>
+    <button class="allow-btn" onclick="enableLocation()">
+      <i class="ti ti-location" style="font-size:14px;vertical-align:-2px;margin-right:6px"></i> Allow Location Access
+    </button>
+    <button class="deny-btn" onclick="searchMode()">Enter destination manually instead</button>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+    <div class="step-dot"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">🌙</div>
+      <div>
+        <div class="header-title">NightWatch</div>
+        <div class="header-sub">
+          <span class="loc-pulse" style="width:8px;height:8px;margin-right:2px"></span>
+          <span id="locationLabel">Live · Jaipur, India</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="icon-btn" onclick="showTab('alerts')">
+        <i class="ti ti-bell"></i>
+        <div class="notification-dot"></div>
+      </div>
+      <div class="icon-btn" onclick="showTab('contacts')">
+        <i class="ti ti-users"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-home" onclick="showTab('home')">
+      <i class="ti ti-home"></i>Home
+    </div>
+    <div class="tab" id="tab-map" onclick="showTab('map')">
+      <i class="ti ti-map"></i>Map
+    </div>
+    <div class="tab" id="tab-sos" onclick="showTab('sos')">
+      <i class="ti ti-sos"></i>SOS
+    </div>
+    <div class="tab" id="tab-contacts" onclick="showTab('contacts')">
+      <i class="ti ti-users"></i>Circle
+    </div>
+    <div class="tab" id="tab-alerts" onclick="showTab('alerts')">
+      <div class="tab-wrap">
+        <i class="ti ti-bell"></i>
+        <span class="tab-badge" id="alertBadge">3</span>
+      </div>
+      Alerts
+    </div>
+  </div>
+
+  <!-- ===== HOME TAB ===== -->
+  <div class="content" id="page-home">
+
+    <!-- Search -->
+    <div class="search-bar">
+      <input class="search-input" type="text" id="destSearch" placeholder="🔍  Search destination or address...">
+      <button class="search-btn" onclick="searchRoute()"><i class="ti ti-arrow-right"></i></button>
+    </div>
+
+    <!-- Mini Map -->
+    <div class="map-container" style="height:200px">
+      <div class="map-bg" style="height:200px">
+        <div class="map-grid"></div>
+        <svg class="map-roads" viewBox="0 0 480 200" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0">
+          <path d="M0,100 Q120,82 240,100 T480,95" stroke="#1e2d4a" stroke-width="9" fill="none"/>
+          <path d="M240,0 Q248,100 240,200" stroke="#1e2d4a" stroke-width="11" fill="none"/>
+          <path d="M0,55 Q100,50 200,55 T400,58" stroke="#141d30" stroke-width="5" fill="none"/>
+          <path d="M80,0 Q88,100 80,200" stroke="#141d30" stroke-width="5" fill="none"/>
+          <path d="M360,0 Q365,100 360,200" stroke="#141d30" stroke-width="5" fill="none"/>
+          <path d="M0,160 Q200,155 400,160 T480,162" stroke="#141d30" stroke-width="4" fill="none"/>
+          <!-- Route A green -->
+          <path d="M95,100 Q155,75 240,86 T385,90" stroke="#22c55e" stroke-width="3" fill="none" opacity="0.9"/>
+          <!-- Route B amber -->
+          <path d="M95,105 Q148,132 240,124 T385,118" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-dasharray="6 4" opacity="0.7"/>
+        </svg>
+        <div class="heatmap-zone zone-red" style="width:70px;height:70px;left:50px;top:30px;opacity:0.4"></div>
+        <div class="heatmap-zone zone-amber" style="width:55px;height:55px;right:70px;top:20px;opacity:0.3"></div>
+        <div class="heatmap-zone zone-green" style="width:80px;height:80px;left:46%;top:35%;opacity:0.35"></div>
+        <div class="map-user-pulse"></div>
+        <div class="map-user-dot"></div>
+        <div class="map-top-btns">
+          <div class="map-btn" onclick="showTab('map')" title="Full map"><i class="ti ti-arrows-maximize"></i></div>
+          <div class="map-btn" title="Recenter"><i class="ti ti-current-location"></i></div>
+        </div>
+        <div class="map-overlay">
+          <div class="map-badge">📍 <span>MG Road, Jaipur</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Safety Score -->
+    <div class="safety-score-card">
+      <div class="score-header">
+        <div>
+          <div class="score-title">AI Safety Score</div>
+          <div class="score-sub">Current location · Updated every 30s</div>
+        </div>
+        <div class="score-live">
+          <span class="loc-pulse" style="width:7px;height:7px"></span> Live
+        </div>
+      </div>
+      <div class="score-display">
+        <div class="score-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#1e2d4a" stroke-width="7"/>
+            <circle id="scoreArc" cx="40" cy="40" r="32" fill="none" stroke="#22c55e" stroke-width="7"
+              stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="50"
+              style="transition:all 1s ease"/>
+          </svg>
+          <div class="score-ring-center">
+            <div class="score-num" id="scoreNum" style="color:#22c55e">75</div>
+            <div class="score-pct">/ 100</div>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="score-label" id="scoreLabel" style="color:#22c55e">Moderate Safe</div>
+          <div class="score-desc" id="scoreDesc">Well-lit main road. Moderate foot traffic. 2 incidents in last 48 hrs.</div>
+          <div class="score-chips">
+            <span class="chip chip-green"><i class="ti ti-sun" style="font-size:11px"></i> Well-lit</span>
+            <span class="chip chip-amber"><i class="ti ti-users" style="font-size:11px"></i> Low crowd</span>
+          </div>
+        </div>
+      </div>
+      <div class="score-factors">
+        <div class="factor"><span class="factor-icon">💡</span><div class="factor-info"><div class="factor-name">Lighting</div><div class="factor-val" style="color:var(--green2)">Good</div></div></div>
+        <div class="factor"><span class="factor-icon">👥</span><div class="factor-info"><div class="factor-name">Crowd</div><div class="factor-val" style="color:var(--amber2)">Low</div></div></div>
+        <div class="factor"><span class="factor-icon">🚨</span><div class="factor-info"><div class="factor-name">Incidents (48h)</div><div class="factor-val" style="color:var(--amber2)">2 reports</div></div></div>
+        <div class="factor"><span class="factor-icon">🚓</span><div class="factor-info"><div class="factor-name">Nearest Police</div><div class="factor-val" style="color:var(--green2)">1.2 km</div></div></div>
+      </div>
+    </div>
+
+    <!-- Route Intelligence -->
+    <div class="section-title">
+      <i class="ti ti-route" style="font-size:16px;color:var(--blue2)"></i> Route Intelligence
+    </div>
+
+    <div class="route-card safe selected" onclick="selectRoute(this,89,'Route A · Via MG Road','12 min')">
+      <div class="route-top">
+        <div class="route-name">Route A · Via MG Road <span class="recommended-tag">✓ Recommended</span></div>
+        <span class="score-badge badge-green">89%</span>
+      </div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:89%;background:var(--green)"></div></div>
+      <div class="route-meta">
+        <div class="route-stat"><i class="ti ti-clock" style="font-size:12px"></i> 12 min</div>
+        <div class="route-stat"><i class="ti ti-sun" style="font-size:12px"></i> Well-lit</div>
+        <div class="route-stat"><i class="ti ti-users" style="font-size:12px"></i> Active</div>
+        <div class="route-stat" style="color:var(--green2)"><i class="ti ti-check" style="font-size:12px"></i> 0 flags</div>
+      </div>
+    </div>
+
+    <div class="route-card caution" onclick="selectRoute(this,62,'Route B · Via Civil Lines','9 min')">
+      <div class="route-top">
+        <div class="route-name">Route B · Via Civil Lines</div>
+        <span class="score-badge badge-amber">62%</span>
+      </div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:62%;background:var(--amber)"></div></div>
+      <div class="route-meta">
+        <div class="route-stat"><i class="ti ti-clock" style="font-size:12px"></i> 9 min</div>
+        <div class="route-stat" style="color:var(--amber2)"><i class="ti ti-moon" style="font-size:12px"></i> Dark stretch</div>
+        <div class="route-stat" style="color:var(--amber2)"><i class="ti ti-users" style="font-size:12px"></i> Low crowd</div>
+        <div class="route-stat" style="color:var(--red2)"><i class="ti ti-alert-triangle" style="font-size:12px"></i> 3 flags</div>
+      </div>
+    </div>
+
+    <div class="route-card danger" onclick="selectRoute(this,31,'Route C · Via Station Road','7 min')" style="margin-bottom:16px">
+      <div class="route-top">
+        <div class="route-name">Route C · Via Station Road</div>
+        <span class="score-badge badge-red">31%</span>
+      </div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:31%;background:var(--red)"></div></div>
+      <div class="route-meta">
+        <div class="route-stat"><i class="ti ti-clock" style="font-size:12px"></i> 7 min</div>
+        <div class="route-stat" style="color:var(--red2)"><i class="ti ti-moon" style="font-size:12px"></i> No lighting</div>
+        <div class="route-stat" style="color:var(--red2)"><i class="ti ti-users" style="font-size:12px"></i> Isolated</div>
+        <div class="route-stat" style="color:var(--red2)"><i class="ti ti-alert-triangle" style="font-size:12px"></i> 8 flags</div>
+      </div>
+    </div>
+
+    <!-- Trip Panel -->
+    <div class="trip-panel" id="tripPanel">
+      <div class="trip-status">
+        <div class="trip-dot" id="tripDot"></div>
+        <div>
+          <div class="trip-text" id="tripText">Start Safe Trip</div>
+          <div class="trip-sub" id="tripSub">Route A selected · 89% safe · 12 min</div>
+        </div>
+      </div>
+      <div id="tripStatsArea"></div>
+      <button class="trip-btn" id="tripBtn" onclick="toggleTrip()">
+        <i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px;margin-right:6px"></i> Begin Trip Tracking
+      </button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="quick-btn sos-quick" onclick="showTab('sos')"><i class="ti ti-sos"></i>SOS</div>
+      <div class="quick-btn" onclick="doReport()"><i class="ti ti-alert-triangle"></i>Report</div>
+      <div class="quick-btn" onclick="showTab('contacts')"><i class="ti ti-user-check"></i>Circle</div>
+      <div class="quick-btn" onclick="doShare()"><i class="ti ti-share"></i>Share</div>
+    </div>
+
+  </div>
+
+  <!-- ===== MAP TAB ===== -->
+  <div class="content" id="page-map" style="display:none">
+
+    <div class="section-title"><i class="ti ti-map" style="font-size:16px;color:var(--blue2)"></i> Live Safety Heatmap</div>
+    <div class="heatmap-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> High risk</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Caution</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Safe zone</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> You</div>
+    </div>
+
+    <div class="map-container" style="height:280px">
+      <div class="map-bg" style="height:280px">
+        <div class="map-grid"></div>
+        <svg viewBox="0 0 480 280" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="M0,140 Q120,118 240,140 T480,134" stroke="#1e2d4a" stroke-width="10" fill="none"/>
+          <path d="M240,0 Q250,140 240,280" stroke="#1e2d4a" stroke-width="12" fill="none"/>
+          <path d="M0,75 Q200,70 400,75 T480,77" stroke="#141d30" stroke-width="6" fill="none"/>
+          <path d="M80,0 Q90,140 80,280" stroke="#141d30" stroke-width="6" fill="none"/>
+          <path d="M360,0 Q365,140 360,280" stroke="#141d30" stroke-width="6" fill="none"/>
+          <path d="M0,215 Q200,210 400,215 T480,217" stroke="#141d30" stroke-width="5" fill="none"/>
+          <path d="M160,0 Q162,140 160,280" stroke="#0e1525" stroke-width="3" fill="none"/>
+        </svg>
+        <div class="heatmap-zone zone-red" style="width:110px;height:110px;left:20px;top:15px;opacity:0.5"></div>
+        <div class="heatmap-zone zone-red" style="width:75px;height:75px;left:8px;bottom:30px;opacity:0.38"></div>
+        <div class="heatmap-zone zone-amber" style="width:90px;height:90px;right:50px;top:25px;opacity:0.42"></div>
+        <div class="heatmap-zone zone-amber" style="width:60px;height:60px;right:15px;bottom:50px;opacity:0.32"></div>
+        <div class="heatmap-zone zone-green" style="width:120px;height:120px;left:42%;top:34%;opacity:0.45"></div>
+        <div class="heatmap-zone zone-green" style="width:80px;height:80px;right:28%;top:12%;opacity:0.32"></div>
+        <div class="map-user-pulse"></div>
+        <div class="map-user-dot" style="width:22px;height:22px"></div>
+        <div class="map-top-btns">
+          <div class="map-btn" title="Recenter"><i class="ti ti-current-location"></i></div>
+          <div class="map-btn" title="Layers"><i class="ti ti-layers"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incident Feed -->
+    <div class="section-card" style="margin-top:14px">
+      <div class="flex-row" style="margin-bottom:12px">
+        <span style="font-size:14px;font-weight:700">Community Incident Reports</span>
+        <span class="chip chip-red ml-auto" style="font-size:10px">Live</span>
+      </div>
+      <div id="incidentFeed">
+        <div class="alert-card new" style="border-left-color:var(--red)">
+          <div class="alert-icon-wrap alert-icon-red"><i class="ti ti-alert-triangle"></i></div>
+          <div class="alert-body">
+            <div class="alert-title">Suspicious activity reported</div>
+            <div class="alert-desc">Station Rd near Sindhi Camp · 3 community reports</div>
+            <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 14 min ago · 0.8 km away</div>
+          </div>
+        </div>
+        <div class="alert-card">
+          <div class="alert-icon-wrap alert-icon-amber"><i class="ti ti-moon"></i></div>
+          <div class="alert-body">
+            <div class="alert-title">Street light outage</div>
+            <div class="alert-desc">Civil Lines underpass · Verified by 2 users</div>
+            <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 1 hr ago · 1.4 km away</div>
+          </div>
+        </div>
+        <div class="alert-card">
+          <div class="alert-icon-wrap alert-icon-green"><i class="ti ti-check"></i></div>
+          <div class="alert-body">
+            <div class="alert-title">Area cleared — MG Road</div>
+            <div class="alert-desc">Police patrol completed. Normal activity restored.</div>
+            <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 2 hr ago</div>
+          </div>
+        </div>
+      </div>
+      <button class="report-incident-btn" onclick="doReport()">
+        <i class="ti ti-plus"></i> Report an Incident in Your Area
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SOS TAB ===== -->
+  <div class="content" id="page-sos" style="display:none">
+
+    <!-- Normal SOS state -->
+    <div id="sosNormal">
+      <div class="sos-section">
+
+        <div style="text-align:center">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">Emergency Trigger</div>
+          <div style="font-size:12px;color:var(--text2)">Tap the button or say <strong style="color:var(--red2)">"Help me"</strong></div>
+        </div>
+
+        <div class="sos-ring" onclick="triggerSOS()">
+          <div class="sos-ring-anim"></div>
+          <div class="sos-ring-mid"></div>
+          <div class="sos-btn-inner">
+            <div class="sos-text">SOS</div>
+            <div class="sos-sub">TAP TO ACTIVATE</div>
+          </div>
+        </div>
+
+        <div class="voice-section">
+          <div class="voice-header">
+            <div class="voice-title"><i class="ti ti-microphone" style="font-size:15px;vertical-align:-2px;color:var(--green);margin-right:6px"></i> Smart Voice Detection</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);font-weight:600">
+              <span class="loc-pulse" style="width:7px;height:7px"></span> Listening
+            </div>
+          </div>
+          <div class="voice-waves">
+            <div class="wave-bar active"></div>
+            <div class="wave-bar active"></div>
+            <div class="wave-bar active"></div>
+            <div class="wave-bar active"></div>
+            <div class="wave-bar active"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:8px">Detects panic tone &amp; trigger keywords. Activates silently.</div>
+          <div class="voice-keywords">
+            <span class="keyword-tag trigger">"help me"</span>
+            <span class="keyword-tag trigger">"save me"</span>
+            <span class="keyword-tag trigger">"call police"</span>
+            <span class="keyword-tag">"bachaao"</span>
+            <span class="keyword-tag">panic tone</span>
+            <span class="keyword-tag">scream</span>
+          </div>
+        </div>
+
+        <div class="sos-actions-card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">When SOS activates automatically:</div>
+          <div class="sos-action-item">
+            <div class="sos-action-icon" style="background:rgba(59,130,246,0.1);color:var(--blue2)"><i class="ti ti-map-pin"></i></div>
+            <div><div class="sos-action-title">Live location broadcast</div><div class="sos-action-desc">Real-time GPS shared with trusted circle + authorities</div></div>
+          </div>
+          <div class="sos-action-item">
+            <div class="sos-action-icon" style="background:rgba(239,68,68,0.1);color:var(--red2)"><i class="ti ti-microphone"></i></div>
+            <div><div class="sos-action-title">Audio recording starts</div><div class="sos-action-desc">Background recording saved to cloud as evidence</div></div>
+          </div>
+          <div class="sos-action-item">
+            <div class="sos-action-icon" style="background:rgba(245,158,11,0.1);color:var(--amber2)"><i class="ti ti-bell"></i></div>
+            <div><div class="sos-action-title">Silent alerts sent</div><div class="sos-action-desc">SMS + push notification to all trusted contacts</div></div>
+          </div>
+          <div class="sos-action-item">
+            <div class="sos-action-icon" style="background:rgba(34,197,94,0.1);color:var(--green2)"><i class="ti ti-phone"></i></div>
+            <div><div class="sos-action-title">Emergency services dialed</div><div class="sos-action-desc">Auto-calls 112 (India) with location details</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Triggered SOS state -->
+    <div id="sosTriggered" style="display:none">
+      <div class="sos-section">
+        <div class="sos-triggered-card">
+          <div class="sos-activated-title"><i class="ti ti-sos"></i> SOS ACTIVATED</div>
+          <div class="sos-timer" id="sosTimer">00:00</div>
+          <div class="sos-timer-lbl">Recording · Location live · Alerts sent</div>
+          <div style="margin-top:14px;text-align:left">
+            <div class="contact-notif">
+              <div class="contact-avatar" style="background:#1d4ed8">MA</div>
+              <div><div class="notif-name">Mom (Anita)</div><div class="notif-phone">+91 98XXX XXXXX</div></div>
+              <div class="notif-status notif-sent"><i class="ti ti-check"></i> Notified</div>
+            </div>
+            <div class="contact-notif">
+              <div class="contact-avatar" style="background:#15803d">RK</div>
+              <div><div class="notif-name">Rahul Kumar</div><div class="notif-phone">+91 91XXX XXXXX</div></div>
+              <div class="notif-status notif-sent"><i class="ti ti-check"></i> Notified</div>
+            </div>
+            <div class="contact-notif">
+              <div class="contact-avatar" style="background:#7c3aed">112</div>
+              <div><div class="notif-name">Emergency Services</div><div class="notif-phone">112 — India Emergency</div></div>
+              <div class="notif-status notif-pending"><i class="ti ti-loader"></i> Dialing...</div>
+            </div>
+          </div>
+          <button class="cancel-sos-btn" onclick="cancelSOS()">
+            <i class="ti ti-check" style="font-size:13px;vertical-align:-2px;margin-right:6px"></i> I'm Safe — Cancel SOS
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== CONTACTS TAB ===== -->
+  <div class="content" id="page-contacts" style="display:none">
+
+    <div class="deviation-banner">
+      <i class="ti ti-alert-triangle"></i>
+      <div><strong>Priya is off-route</strong> — Deviated 400m near Sindhi Camp. Your trusted circle was notified automatically.</div>
+    </div>
+
+    <div class="section-title"><i class="ti ti-shield-check" style="font-size:16px;color:var(--blue2)"></i> Trusted Circle</div>
+
+    <div class="contact-card">
+      <div class="contact-avatar" style="background:#1d4ed8;width:44px;height:44px;border-radius:50%;flex-shrink:0">MA</div>
+      <div class="contact-info">
+        <div class="contact-name">Mom (Anita)</div>
+        <div class="contact-rel">+91 98XXX XXXXX · Family</div>
+        <div class="contact-meta">
+          <span class="contact-tag tag-tracking"><i class="ti ti-eye" style="font-size:10px"></i> Watching live</span>
+          <span class="contact-tag tag-alert"><i class="ti ti-bell" style="font-size:10px"></i> Alerts on</span>
+        </div>
+      </div>
+      <div class="contact-action-btn"><i class="ti ti-phone"></i></div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-avatar" style="background:#15803d;width:44px;height:44px;border-radius:50%;flex-shrink:0">RK</div>
+      <div class="contact-info">
+        <div class="contact-name">Rahul Kumar</div>
+        <div class="contact-rel">+91 91XXX XXXXX · Friend</div>
+        <div class="contact-meta">
+          <span class="contact-tag tag-tracking"><i class="ti ti-eye" style="font-size:10px"></i> Watching live</span>
+        </div>
+      </div>
+      <div class="contact-action-btn"><i class="ti ti-phone"></i></div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-avatar" style="background:#4a3f8a;width:44px;height:44px;border-radius:50%;flex-shrink:0">PS</div>
+      <div class="contact-info">
+        <div class="contact-name">Priya Sharma</div>
+        <div class="contact-rel">+91 70XXX XXXXX · Roommate</div>
+        <div class="contact-meta">
+          <span class="contact-tag tag-offline"><i class="ti ti-wifi-off" style="font-size:10px"></i> Offline</span>
+        </div>
+      </div>
+      <div class="contact-action-btn"><i class="ti ti-phone"></i></div>
+    </div>
+
+    <div class="add-contact-btn"><i class="ti ti-plus"></i> Add Trusted Contact</div>
+
+    <!-- Circle Intelligence -->
+    <div class="section-card" style="margin-top:16px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px">Circle Intelligence Settings</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="flex-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Route deviation alert</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Alert if you go 300m off planned route</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="flex-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Inactivity detection</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Alert contacts if no movement for 5 min</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="flex-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Safe arrival confirmation</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Notify circle when you arrive safely</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="flex-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Battery low warning</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Warn contacts if phone drops below 15%</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="flex-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Predictive risk alert</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Warn if approaching a predicted danger zone</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== ALERTS TAB ===== -->
+  <div class="content" id="page-alerts" style="display:none">
+
+    <div class="section-title"><i class="ti ti-bell" style="font-size:16px;color:var(--blue2)"></i> Safety Alerts</div>
+
+    <div class="alert-card new">
+      <div class="alert-icon-wrap alert-icon-red"><i class="ti ti-alert-triangle"></i></div>
+      <div class="alert-body">
+        <div class="alert-title">High-risk zone ahead on Route B</div>
+        <div class="alert-desc">3 incidents reported near Civil Lines underpass in last 2 hours. Route A is recommended.</div>
+        <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 8 min ago</div>
+      </div>
+    </div>
+
+    <div class="alert-card new">
+      <div class="alert-icon-wrap alert-icon-amber"><i class="ti ti-route-off"></i></div>
+      <div class="alert-body">
+        <div class="alert-title">Priya deviated from route</div>
+        <div class="alert-desc">Priya Sharma went 400m off her planned route near Sindhi Camp. Auto-alert was sent to you.</div>
+        <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 22 min ago</div>
+      </div>
+    </div>
+
+    <div class="alert-card new">
+      <div class="alert-icon-wrap alert-icon-amber"><i class="ti ti-moon"></i></div>
+      <div class="alert-body">
+        <div class="alert-title">Street light outage detected</div>
+        <div class="alert-desc">AI flagged low-light zone between Km 2.4–2.9 on Station Road. Darkness increases risk score by 18 pts.</div>
+        <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 1 hr ago</div>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="alert-icon-wrap alert-icon-blue"><i class="ti ti-info-circle"></i></div>
+      <div class="alert-body">
+        <div class="alert-title">Safety score updated — your area</div>
+        <div class="alert-desc">AI recalculated your area: 75 → 79 (+4 pts). Police patrol just completed MG Road sector.</div>
+        <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> 2 hr ago</div>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="alert-icon-wrap alert-icon-green"><i class="ti ti-check"></i></div>
+      <div class="alert-body">
+        <div class="alert-title">Safe arrival confirmed — Rahul</div>
+        <div class="alert-desc">Rahul Kumar reached destination safely and ended his trip tracking session.</div>
+        <div class="alert-time"><i class="ti ti-clock" style="font-size:10px"></i> Yesterday 11:34 PM</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end mainApp -->
+</div><!-- end app -->
+
+<script src="script.js"></script>
+
+</body>
+</html>
